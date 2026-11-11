@@ -1,0 +1,196 @@
+{
+  "manifest_version": 3,
+  "name": "My MultiView",
+  "version": "1.0.0",
+  "description": "여러 치지직(CHZZK) 방송을 한 화면에서 동시에 시청할 수 있는 개인용 멀티뷰 도구",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuZpKNVrmDC0RRF0pz/2lBWFvD0ezmyjRG6VfZmmBIoruQ7Umq0zNuAbsJty74IfKQomqZPCUNoJnoqDJlYO+v1XdbRNmWCvMKgzeAAvLs9om5Fy9BorNc73Evvbf1YT2IP4jE67n+Yq+zplb3MbrfnKMdufd6t6HBZc5O5SMyBW1VH32khdjhyhLm1xwR0SEHlWAP4ypnYBPoQ3VCVqGYNiZdH/1PwHKQcuKhF11Lb32rKla1P16j5ZcPz1qwgYYxpbcNDpDY0mqeXAvyizs/5K4+xp5QuOV7LRLTOams/f3ZeJdUCQqsAodrfDMfdfXtq1F9ZZhxYjiHsPO5GcXuwIDAQAB",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png",
+    "256": "icons/icon-256.png",
+    "512": "icons/icon-512.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "My MultiView"
+  },
+  "permissions": [
+    "tabs",
+    "storage",
+    "cookies",
+    "notifications",
+    "alarms",
+    "contentSettings",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+  ],
+  "host_permissions": [
+    "https://chzzk.naver.com/*",
+    "https://api.chzzk.naver.com/*",
+    "https://comm-api.game.naver.com/*",
+    "https://game.naver.com/*",
+    "https://nid.naver.com/*",
+    "https://*.naver.com/*",
+    "https://naver.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chzzk.naver.com/*"
+      ],
+      "exclude_matches": [
+        "https://chzzk.naver.com/live/*/chat*"
+      ],
+      "js": [
+        "content/watch-guard-main.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/*"
+      ],
+      "exclude_matches": [
+        "https://chzzk.naver.com/live/*/chat*"
+      ],
+      "js": [
+        "content/lp-external.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/live/*"
+      ],
+      "exclude_matches": [
+        "https://chzzk.naver.com/live/*/chat*"
+      ],
+      "js": [
+        "content/tile-main.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/live/*"
+      ],
+      "exclude_matches": [
+        "https://chzzk.naver.com/live/*/chat*"
+      ],
+      "js": [
+        "content/tile.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/live/*"
+      ],
+      "js": [
+        "content/chat.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/live/*"
+      ],
+      "js": [
+        "content/chat-main.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/live/*"
+      ],
+      "js": [
+        "content/blind-main.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/live/*"
+      ],
+      "exclude_matches": [
+        "https://chzzk.naver.com/live/*/chat*"
+      ],
+      "js": [
+        "content/standalone-flags.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/live/*"
+      ],
+      "exclude_matches": [
+        "https://chzzk.naver.com/live/*/chat*"
+      ],
+      "js": [
+        "content/standalone-blind.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/live/*"
+      ],
+      "exclude_matches": [
+        "https://chzzk.naver.com/live/*/chat*"
+      ],
+      "js": [
+        "content/standalone-chat-main.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/live/*"
+      ],
+      "exclude_matches": [
+        "https://chzzk.naver.com/live/*/chat*"
+      ],
+      "js": [
+        "content/standalone-ad.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://chzzk.naver.com/live/*"
+      ],
+      "exclude_matches": [
+        "https://chzzk.naver.com/live/*/chat*"
+      ],
+      "js": [
+        "content/standalone-chat.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}

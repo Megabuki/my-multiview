@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My MultiView</title>
+    <link rel="stylesheet" href="multiview.css" />
+  </head>
+  <body>
+    <div id="main">
+      <aside id="chatPanel" class="hidden">
+        <div class="chat-head">
+          <select id="chatSelect" aria-label="채팅을 볼 방송 선택"></select>
+          <button id="chatAddBtn" class="btn ghost sm" type="button" title="방송 추가">＋</button>
+          <button id="chatPopoutBtn" class="btn ghost sm" type="button" title="채팅 새 탭 열기">⇱</button>
+          <button id="chatStorageBtn" class="btn ghost sm hidden" type="button" title="채팅 저장소">📋</button>
+          <button id="chatSettingsBtn" class="btn ghost sm" type="button" title="빠른 설정">⚙️</button>
+          <button id="chatCloseBtn" class="btn ghost sm" type="button" title="채팅 닫기">✕</button>
+        </div>
+
+        <div id="addPop" class="add-pop hidden">
+          <form id="addForm" class="add-form" autocomplete="off">
+            <input id="addInput" type="text" placeholder="채널 ID 또는 치지직 URL" aria-label="추가할 방송" />
+            <button class="btn sm add-go" type="submit">추가</button>
+          </form>
+          <div id="addErr" class="add-err"></div>
+          <div id="addFavs" class="add-favs"></div>
+        </div>
+
+        <div id="chatSettingsPop" class="add-pop hidden">
+          <div class="set-row">
+            <span class="set-name">채팅창 위치</span>
+            <div class="seg" role="group" aria-label="채팅창 위치">
+              <input type="radio" name="mvChatPos" id="mvChatPosLeft" value="left" />
+              <label for="mvChatPosLeft">왼쪽</label>
+              <input type="radio" name="mvChatPos" id="mvChatPosRight" value="right" />
+              <label for="mvChatPosRight">오른쪽</label>
+            </div>
+          </div>
+          <label class="set-row">
+            <span class="set-name">채팅 타임스탬프</span>
+            <input id="mvChatTimeBox" class="switch" type="checkbox" />
+          </label>
+          <label class="set-row">
+            <span class="set-name">채팅 미리 불러오기</span>
+            <input id="mvChatPreloadBox" class="switch" type="checkbox" />
+          </label>
+          <label class="set-row">
+            <span class="set-name">블라인드 댓글 표시 (클린봇·관리자)</span>
+            <input id="mvRestoreBlindBox" class="switch" type="checkbox" />
+          </label>
+          <label class="set-row">
+            <span class="set-name">마우스 올린 방송만 소리 켜기</span>
+            <input id="mvHoverAudioBox" class="switch" type="checkbox" />
+          </label>
+          <div class="set-row">
+            <span class="set-name">🏅 배지 채팅 모아보기</span>
+            <button id="badgeBtn" class="btn sm" type="button">열기</button>
+          </div>
+          <div class="set-row">
+            <span class="set-name" id="mvAuthStatusText">🔑 로그인 확인 중…</span>
+            <div class="set-ctrl-btns">
+              <button id="chatLoginBtn" class="btn sm" type="button">로그인</button>
+              <button id="mvSyncCookieBtn" class="btn sm" type="button">쿠키 연동</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="chatStoragePop" class="add-pop add-pop-bottom hidden">
+          <form id="storageAddForm" class="add-form" autocomplete="off">
+            <input id="storageInput" type="text" placeholder="자주 쓰는 채팅 입력" aria-label="저장할 채팅" maxlength="200" />
+            <button class="btn sm add-go" type="submit">저장</button>
+            <button id="storageEditBtn" class="btn sm storage-edit" type="button" title="삭제 모드">삭제</button>
+          </form>
+          <div class="storage-hint">문구를 누르면 복사돼요 (채팅창에 Ctrl+V). 지우려면 '삭제'를 누른 뒤 ✕</div>
+          <div id="storageList" class="storage-list"></div>
+        </div>
+
+        <div id="badgePanel" class="add-pop hidden">
+          <div class="set-row badge-panel-head">
+            <span class="set-name">🏅 배지 채팅 모아보기</span>
+            <div class="badge-controls">
+              <button id="badgeScopeBtn" class="btn sm ghost" type="button" title="현재 방송 / 전체 방송 전환">현재 방송</button>
+              <button id="badgeClearBtn" class="btn sm ghost" type="button" title="목록 비우기">비우기</button>
+            </div>
+          </div>
+          <div id="badgeList" class="badge-list"></div>
+        </div>
+
+        <div id="chatBody" class="chat-body">
+          <button
+            id="mvMgrChatBtn"
+            class="mv-mgr-chat-btn"
+            type="button"
+            title="관리자 · 봇 · 스트리머 채팅 모아보기 팝업 켜기/끄기"
+          >
+            <svg class="mv-mgr-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3.5 5 6.2v5.3c0 4.3 2.9 7.6 7 9 4.1-1.4 7-4.7 7-9V6.2l-7-2.7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="m9 12 2.2 2.2L15.5 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>관리자·봇</span>
+            <span id="mvMgrChatCnt" class="mv-mgr-chat-cnt">0</span>
+          </button>
+
+          <div
+            id="mvMgrChatPopup"
+            class="mv-mgr-chat-popup hidden"
+            role="region"
+            aria-label="관리자 및 봇 채팅 모아보기"
+          >
+            <div class="mv-mgr-chat-head">
+              <div class="mv-mgr-roles" role="group" aria-label="모을 채팅">
+                <label class="mv-mgr-role"><input type="checkbox" data-role="manager" /><span>관리자</span></label>
+                <label class="mv-mgr-role"><input type="checkbox" data-role="streamer" /><span>스트리머</span></label>
+              </div>
+              <div class="mv-mgr-chat-actions">
+                <span class="mv-mgr-fs" title="글자 크기">
+                  <button id="mvMgrFsDown" type="button" title="글자 작게">가−</button>
+                  <span id="mvMgrFsVal">13</span>
+                  <button id="mvMgrFsUp" type="button" title="글자 크게">가+</button>
+                </span>
+                <button id="mvMgrCloseBtn" type="button" title="닫기">✕</button>
+              </div>
+            </div>
+            <div id="mvMgrChatList" class="mv-mgr-chat-list">
+              <div class="mv-mgr-chat-empty">아직 수집된 관리자 · 봇 · 스트리머 채팅이 없습니다.</div>
+            </div>
+          </div>
+
+          <iframe id="chatFrame" title="치지직 채팅"></iframe>
+        </div>
+      </aside>
+
+      <section id="gridWrap">
+        <div id="grid"></div>
+
+        <div id="emptyState" class="hidden">
+          <div class="empty-card">
+            <h2>열려 있는 방송이 없습니다</h2>
+            <p class="sub">아래에 채널 ID 또는 치지직 URL을 입력하거나 즐겨찾기에서 바로 추가하세요.</p>
+            <form id="emptyAddForm" class="add-form empty-form" autocomplete="off">
+              <input id="emptyAddInput" type="text" placeholder="https://chzzk.naver.com/live/... 또는 32자리 채널 ID" />
+              <button class="btn add-go" type="submit">방송 추가</button>
+            </form>
+            <div id="emptyAddErr" class="add-err"></div>
+            <div id="emptyFavs" class="add-favs empty-favs"></div>
+          </div>
+        </div>
+
+        <div id="dockAddPop" class="dock-add-pop hidden" role="dialog" aria-label="빠른 방송 추가">
+          <form id="dockAddForm" class="add-form" autocomplete="off">
+            <input
+              id="dockAddInput"
+              type="text"
+              placeholder="치지직 URL 또는 32자리 채널 ID"
+              aria-label="채널 ID 또는 URL"
+            />
+            <button class="btn sm add-go" type="submit">추가</button>
+          </form>
+          <div id="dockAddErr" class="add-err" aria-live="polite"></div>
+          <div id="dockAddFavs" class="add-favs"></div>
+        </div>
+
+        <div id="quickDock" aria-label="멀티뷰 빠른 도구">
+          <div id="dockItems" class="dock-items">
+            <button id="dockChatBtn" class="dock-btn" type="button" title="채팅 패널 열기/닫기 (단축키: C)">💬 채팅</button>
+            <button id="dockAddBtn" class="dock-btn" type="button" title="방송 추가">＋ 추가</button>
+            <button id="dockHoverAudioBtn" class="dock-btn" type="button" title="마우스 올린 방송만 소리 켜기 (단축키: H)">🎧 호버 오디오</button>
+            <button id="dockMuteAllBtn" class="dock-btn" type="button" title="전체 음소거 (단축키: M)">🔊 음소거 OFF</button>
+            <button id="dockSyncBtn" class="dock-btn" type="button" title="모든 방송 싱크 맞추기 (단축키: S)">⏱ 싱크</button>
+          </div>
+          <button id="dockToggleBtn" class="dock-toggle-btn" type="button" title="빠른 도구 접기/펼치기" aria-expanded="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div id="splitter" title="크기 조절"></div>
+    <div id="toast"></div>
+
+    <template id="tileTemplate">
+      <article class="tile">
+        <div class="tile-bar" draggable="true" title="드래그하여 순서 이동">
+          <span class="tile-name">…</span>
+          <span class="tile-viewers" title="현재 시청자 수"></span>
+          <span class="tile-latency" title="지연 시간"></span>
+          <span class="lp-badge"></span>
+          <span class="tile-btns">
+            <button class="sync-btn" type="button" title="모든 방송 싱크 동기화 (S)">⏱</button>
+            <button class="tbtn ff" type="button" title="지연 줄이기">⏩</button>
+            <button class="tbtn reload" type="button" title="새로고침">↻</button>
+            <button class="tbtn chat" type="button" title="채팅 보기">💬</button>
+            <button class="tbtn focus" type="button" title="크게 보기">◱</button>
+            <button class="tbtn popout" type="button" title="새 탭 열기">↗</button>
+            <button class="tbtn fav" type="button" title="즐겨찾기">☆</button>
+            <button class="tbtn lp" type="button" title="통나무 자동 획득 켜기">🪵</button>
+            <button class="tbtn close" type="button" title="닫기">✕</button>
+          </span>
+        </div>
+        <div class="tile-name-sub" draggable="true" title="드래그하여 순서 이동"><span class="sub-name"></span><span class="tile-viewers" title="현재 시청자 수"></span></div>
+        <div class="tile-body">
+          <iframe class="tile-frame" title="치지직 방송" allow="autoplay; fullscreen; picture-in-picture; encrypted-media"></iframe>
+          <div class="offline hidden"><b>방송 대기 중</b></div>
+        </div>
+      </article>
+    </template>
+
+    <script src="../shared/common.js"></script>
+    <script src="multiview.js"></script>
+  </body>
+</html>

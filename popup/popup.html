@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My MultiView</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <nav class="side">
+      <div class="side-title">메뉴</div>
+      <a class="side-item" href="#secAdd">방송 추가</a>
+      <a class="side-item" href="#secFollow">팔로우 채널</a>
+      <a class="side-item" href="#secFav">즐겨찾기</a>
+      <a class="side-item" href="#secChat">채팅</a>
+      <a class="side-item" href="#secAv">화면/소리</a>
+      <a class="side-item" href="#secSync">동기화</a>
+      <a class="side-item" href="#secLp">통나무</a>
+      <a class="side-item" href="#secNotify">알림</a>
+      <a class="side-item" href="#secShortcuts">단축키</a>
+      <a class="side-item" href="#secBackup">백업/초기화</a>
+    </nav>
+
+    <main class="page" id="page">
+      <header class="top">
+        <div class="top-row">
+          <div class="top-brand">
+            <img src="../icons/icon-48.png" alt="" />
+            <span>My MultiView</span>
+            <small id="version"></small>
+          </div>
+          <div class="top-links">
+            <button id="bugBtn" class="link-btn" type="button">🐞 버그 제보</button>
+            <button id="donateBtn" class="link-btn" type="button">☕ 후원하기</button>
+          </div>
+        </div>
+
+        <div class="auth-bar" id="authBar">
+          <span class="auth-status" id="authStatus">🔑 치지직 로그인 상태 확인 중…</span>
+          <div class="auth-actions">
+            <button id="authLoginBtn" class="btn btn-sub btn-xs hidden" type="button">로그인</button>
+            <button id="authSyncBtn" class="btn btn-sub btn-xs" type="button" title="채팅 로그인이 안 될 때 쿠키를 즉시 동기화합니다">쿠키 연동</button>
+          </div>
+        </div>
+
+        <div class="top-btns">
+          <button id="openBtn" class="btn btn-main" type="button">멀티뷰 열기</button>
+          <button id="addListBtn" class="btn btn-sub" type="button" title="아래 방송 추가 칸의 채널들을 멀티뷰에 추가">방송 목록 추가</button>
+        </div>
+        <p class="top-note">모든 설정은 열려 있는 멀티뷰 화면에도 실시간으로 즉시 반영됩니다</p>
+      </header>
+
+      <!-- 방송 추가 -->
+      <section class="sec" id="secAdd">
+        <h2>방송 추가</h2>
+        <p class="sec-desc">채널 ID 또는 라이브/채널 URL을 줄바꿈으로 입력하세요. 중복은 자동으로 제거돼요. (Ctrl+Enter로 열기)</p>
+        <textarea
+          id="channelInput"
+          class="field"
+          rows="5"
+          placeholder="예:
+https://chzzk.naver.com/live/0123456789abcdef0123456789abcdef
+0123456789abcdef0123456789abcdef"
+        ></textarea>
+        <div class="add-meta">
+          <span class="add-count" id="channelCount">인식된 채널: 0</span>
+          <button id="clearBtn" class="btn btn-sub btn-sm" type="button">초기화</button>
+        </div>
+        <div class="add-error" id="inputError" aria-live="polite"></div>
+        <div class="ch-list" id="channelList" aria-label="채널 목록"></div>
+        <p class="sec-desc">드래그로 순서를 바꿀 수 있어요. ♡를 누르면 즐겨찾기에 추가돼요.</p>
+      </section>
+
+      <!-- 팔로우 채널 (내 치지직 계정 팔로잉 목록 자동 조회 + 그룹 관리) -->
+      <section class="sec" id="secFollow">
+        <div class="sec-head-row">
+          <div class="sec-title-wrap">
+            <h2>팔로우 채널</h2>
+            <span id="followCountBadge" class="grp-count">불러오는 중…</span>
+          </div>
+          <div class="follow-head-btns">
+            <button id="refreshFollowBtn" class="btn btn-sub btn-xs" type="button" title="팔로우 목록 및 생방송 상태 새로고침">↻ 새로고침</button>
+            <button id="addLiveFollowsBtn" class="btn btn-sub btn-sm" type="button" title="현재 방송 중인 팔로우 채널을 모두 추가 목록에 넣습니다">🔴 생방송 모두 추가</button>
+          </div>
+        </div>
+        <p class="sec-desc">내 치지직 아이디의 팔로우 채널을 자동으로 불러옵니다. 채널을 클릭하면 방송 추가 목록에 들어가며, 그룹으로 묶어 관리할 수 있어요.</p>
+        <div class="follow-toolbar">
+          <div class="follow-tabs" role="tablist" aria-label="팔로우 표시 방식">
+            <button type="button" class="follow-tab on" data-mode="all">전체</button>
+            <button type="button" class="follow-tab" data-mode="live">🔴 생방송만</button>
+            <button type="button" class="follow-tab" data-mode="group">📁 그룹별 보기</button>
+          </div>
+          <select id="followGroupFilter" class="sec-select follow-group-filter" aria-label="그룹 필터">
+            <option value="">전체 그룹</option>
+          </select>
+          <input id="followSearchInput" class="follow-search" type="search" placeholder="스트리머 / 방제 검색" aria-label="팔로우 채널 검색" />
+        </div>
+        <form id="followGrpAddForm" class="grp-add" autocomplete="off">
+          <input id="followGrpAddInput" type="text" placeholder="새 팔로워/즐겨찾기 그룹 이름" maxlength="20" aria-label="새 그룹 이름" />
+          <button class="btn btn-sub btn-sm" type="submit">그룹 만들기</button>
+        </form>
+        <div id="followEmpty" class="empty">팔로우 채널을 불러오는 중입니다…</div>
+        <div id="followList" class="follow-list" role="list"></div>
+        <div id="followNotice" class="add-error"></div>
+      </section>
+
+      <!-- 즐겨찾기 -->
+      <section class="sec" id="secFav">
+        <div class="sec-head-row">
+          <h2>즐겨찾기</h2>
+          <button id="addLiveFavsBtn" class="btn btn-sub btn-sm" type="button" title="현재 방송 중인 즐겨찾기 채널을 모두 추가 목록에 넣습니다">🔴 생방송 채널 모두 추가</button>
+        </div>
+        <p class="sec-desc">이름을 누르면 방송 추가 목록에 들어가요. 끌어서 다른 그룹에 놓으면 그룹이 바뀌어요.</p>
+        <form id="grpAddForm" class="grp-add" autocomplete="off">
+          <input id="grpAddInput" type="text" placeholder="새 그룹 이름" maxlength="20" aria-label="새 그룹 이름" />
+          <button class="btn btn-sub btn-sm" type="submit">그룹 추가</button>
+        </form>
+        <div id="favEmpty" class="empty">즐겨찾기 없음</div>
+        <div id="favList" class="fav-list" role="list"></div>
+        <div id="favNotice" class="add-error"></div>
+      </section>
+
+      <!-- 채팅 -->
+      <section class="sec" id="secChat">
+        <h2>채팅</h2>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">채팅창 위치</div>
+            <div class="row-desc">멀티뷰 채팅 패널을 어느 쪽에 둘지</div>
+          </div>
+          <div class="seg" role="group" aria-label="채팅창 위치">
+            <input type="radio" name="chatPos" id="chatPosLeft" value="left" />
+            <label for="chatPosLeft">왼쪽</label>
+            <input type="radio" name="chatPos" id="chatPosRight" value="right" />
+            <label for="chatPosRight">오른쪽</label>
+          </div>
+        </div>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">채팅 타임스탬프</div>
+            <div class="row-desc">채팅마다 보낸 시각(시:분) 표시</div>
+          </div>
+          <input id="chatTimeBox" class="switch" type="checkbox" />
+        </label>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">채팅 미리 불러오기</div>
+            <div class="row-desc">열린 방송 채팅을 미리 띄워두고 바로 전환 (메모리를 조금 더 씀)</div>
+          </div>
+          <input id="chatPreloadBox" class="switch" type="checkbox" />
+        </label>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">채팅 크기</div>
+            <div class="row-desc">10 ~ 24px (기본 14)</div>
+          </div>
+          <div class="sec-ctrl">
+            <input id="chatFontSize" class="sec-input" type="number" min="10" max="24" step="1" inputmode="numeric" />
+            <span class="sec-unit">px</span>
+          </div>
+        </div>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">치즈 채팅 숨기기</div>
+          </div>
+          <input id="chatHideCheeseBox" class="switch" type="checkbox" />
+        </label>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">구독 채팅 숨기기</div>
+          </div>
+          <input id="chatHideSubBox" class="switch" type="checkbox" />
+        </label>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">블라인드 채팅 숨기기</div>
+          </div>
+          <input id="chatHideBlindBox" class="switch" type="checkbox" />
+        </label>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">랭킹 숨기기</div>
+          </div>
+          <input id="chatHideRankBox" class="switch" type="checkbox" />
+        </label>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">미션 숨기기</div>
+          </div>
+          <input id="chatHideMissionBox" class="switch" type="checkbox" />
+        </label>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">승부예측 숨기기</div>
+          </div>
+          <input id="chatHidePredictBox" class="switch" type="checkbox" />
+        </label>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">후원 메시지 숨기기</div>
+          </div>
+          <input id="chatHideDonationBox" class="switch" type="checkbox" />
+        </label>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">채팅 뱃지 제거</div>
+            <div class="row-desc">닉네임 옆 배지 아이콘 숨기기</div>
+          </div>
+          <input id="chatHideBadgeBox" class="switch" type="checkbox" />
+        </label>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">채팅 색상 모드</div>
+          </div>
+          <div class="seg" role="group" aria-label="채팅 색상 모드">
+            <input type="radio" name="chatColor" id="chatColorDefault" value="default" />
+            <label for="chatColorDefault">기본</label>
+            <input type="radio" name="chatColor" id="chatColorCustom" value="custom" />
+            <label for="chatColorCustom">커스텀</label>
+          </div>
+        </div>
+        <div class="row" id="chatColorRow">
+          <div class="row-text">
+            <div class="row-name">닉네임/본문 색상</div>
+          </div>
+          <div class="sec-ctrl">
+            <input id="chatNickColor" type="color" value="#2dd4bf" title="닉네임 색상" />
+            <input id="chatBodyColor" type="color" value="#dbe2f1" title="본문 색상" />
+          </div>
+        </div>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">클린봇·관리자 블라인드 댓글 보이게 하기</div>
+            <div class="row-desc">클린봇이나 채팅 관리자가 블라인드 처리한 댓글의 원문을 복원해 노란색으로 표시</div>
+          </div>
+          <input id="chatRestoreBlindBox" class="switch" type="checkbox" />
+        </label>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">고정할 유저</div>
+            <div class="row-desc">닉네임을 쉼표로 구분해 입력 (해당 유저 채팅이 위에 고정됨)</div>
+          </div>
+        </div>
+        <div class="row">
+          <input id="chatPinInput" class="field" type="text" placeholder="예: 스트리머닉, 매니저닉" />
+        </div>
+      </section>
+
+      <!-- 화면/소리 -->
+      <section class="sec" id="secAv">
+        <div class="sec-head-row">
+          <h2>화면/소리 및 배치</h2>
+          <button id="resetFilterBtn" class="btn btn-sub btn-sm" type="button">화면 필터 초기화</button>
+        </div>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">마우스 올린 방송만 소리 켜기</div>
+            <div class="row-desc">여러 방송 시청 시 마우스가 위치한 칸만 소리를 켜고 나머지는 자동 음소거 (단축키: H)</div>
+          </div>
+          <input id="hoverAudioBox" class="switch" type="checkbox" />
+        </label>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">오디오 압축 (음량 평준화)</div>
+            <div class="row-desc">방송마다 소리 크기를 평준화 (음량 편차 줄이기)</div>
+          </div>
+          <input id="tileAudioCompressBox" class="switch" type="checkbox" />
+        </label>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">광고 자동 음소거 및 스킵</div>
+            <div class="row-desc">광고가 나오면 자동으로 음소거, 끝나면 복원. 건너뛰기 버튼 자동 클릭</div>
+          </div>
+          <input id="tileAdMuteBox" class="switch" type="checkbox" />
+        </label>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">기본 화질 설정</div>
+            <div class="row-desc">방송별로 직접 바꾼 화질이 없을 때 적용할 기본 화질</div>
+          </div>
+          <select id="defaultQualitySelect" class="sec-select" aria-label="기본 화질 설정">
+            <option value="auto">자동 (기본)</option>
+            <option value="1080">1080p (FHD)</option>
+            <option value="720">720p (HD)</option>
+            <option value="480">480p (SD)</option>
+            <option value="360">360p (저사양)</option>
+          </select>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">영상 비율 맞춤</div>
+            <div class="row-desc">원본 비율 유지(짤림 없음) 또는 칸에 꽉 채우기</div>
+          </div>
+          <div class="seg" role="group" aria-label="영상 비율 맞춤">
+            <input type="radio" name="videoFit" id="videoFitContain" value="contain" />
+            <label for="videoFitContain">원본 비율</label>
+            <input type="radio" name="videoFit" id="videoFitCover" value="cover" />
+            <label for="videoFitCover">꽉 채우기</label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">한 줄 방송 열 수 (그리드)</div>
+            <div class="row-desc">자동 최적 배치 또는 한 줄당 고정 열 수 지정</div>
+          </div>
+          <select id="gridColsSelect" class="sec-select" aria-label="한 줄 방송 열 수">
+            <option value="0">자동 최적 배치</option>
+            <option value="1">1열 고정</option>
+            <option value="2">2열 고정</option>
+            <option value="3">3열 고정</option>
+            <option value="4">4열 고정</option>
+          </select>
+        </div>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">타일 상단 컨트롤바 항상 표시</div>
+            <div class="row-desc">마우스를 올리지 않아도 방송 이름·지연시간·버튼 바를 항상 표시</div>
+          </div>
+          <input id="alwaysShowBarBox" class="switch" type="checkbox" />
+        </label>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">밝기</div>
+            <div class="row-desc">0 ~ 200% (기본 100)</div>
+          </div>
+          <div class="sec-ctrl">
+            <input id="tileBrightness" class="sec-input" type="number" min="0" max="200" step="5" inputmode="numeric" />
+            <span class="sec-unit">%</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">대비</div>
+            <div class="row-desc">0 ~ 200% (기본 100)</div>
+          </div>
+          <div class="sec-ctrl">
+            <input id="tileContrast" class="sec-input" type="number" min="0" max="200" step="5" inputmode="numeric" />
+            <span class="sec-unit">%</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">채도</div>
+            <div class="row-desc">0 ~ 200% (기본 100)</div>
+          </div>
+          <div class="sec-ctrl">
+            <input id="tileSaturate" class="sec-input" type="number" min="0" max="200" step="5" inputmode="numeric" />
+            <span class="sec-unit">%</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">감마</div>
+            <div class="row-desc">50 ~ 200% (기본 100)</div>
+          </div>
+          <div class="sec-ctrl">
+            <input id="tileGamma" class="sec-input" type="number" min="50" max="200" step="5" inputmode="numeric" />
+            <span class="sec-unit">%</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 동기화 -->
+      <section class="sec" id="secSync">
+        <h2>동기화</h2>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">딜레이 초과 시 자동 동기화</div>
+            <div class="row-desc">지연 시간이 기준보다 길어지면 자동으로 지연 줄이기</div>
+          </div>
+          <input id="autoFfBox" class="switch" type="checkbox" />
+        </label>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">기준 지연 시간</div>
+            <div class="row-desc">5 ~ 30초</div>
+          </div>
+          <div class="sec-ctrl">
+            <div class="sec-presets" role="group" aria-label="기준 지연 시간 프리셋">
+              <button type="button" class="sec-preset" data-sec="8">8</button>
+              <button type="button" class="sec-preset" data-sec="12">12</button>
+              <button type="button" class="sec-preset" data-sec="20">20</button>
+            </div>
+            <input id="autoFfSec" class="sec-input" type="number" min="5" max="30" step="1" inputmode="numeric" />
+            <span class="sec-unit">초</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 통나무 -->
+      <section class="sec" id="secLp">
+        <h2>통나무</h2>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">1시간 시청 통나무 파워 자동 획득</div>
+            <div class="row-desc">채팅창의 '1시간 시청 통나무 파워 배달 완료! 받기' 배너 및 채널 통나무를 자동으로 수령합니다 (칸 위쪽 🪵 버튼으로 방송별 ON/OFF 가능)</div>
+          </div>
+          <input id="autoLpBox" class="switch" type="checkbox" />
+        </label>
+      </section>
+
+      <!-- 알림 -->
+      <section class="sec" id="secNotify">
+        <h2>알림</h2>
+        <label class="row">
+          <div class="row-text">
+            <div class="row-name">방송 시작/종료 알림</div>
+            <div class="row-desc">즐겨찾기 채널의 방송 상태를 2분마다 확인해 알림 (클릭 시 열린 멀티뷰에 추가)</div>
+          </div>
+          <input id="notifyLiveBox" class="switch" type="checkbox" />
+        </label>
+      </section>
+
+      <!-- 단축키 -->
+      <section class="sec" id="secShortcuts">
+        <h2>단축키</h2>
+        <p class="sec-desc">멀티뷰 화면에서 사용할 수 있는 키보드 단축키입니다.</p>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">해당 번호 방송 크게 보기 (포커스 전환)</div>
+          </div>
+          <kbd class="kbd-badge">1 ~ 9</kbd>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">채팅 패널 열기 / 닫기</div>
+          </div>
+          <kbd class="kbd-badge">C</kbd>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">전체 방송 일괄 음소거 / 해제</div>
+          </div>
+          <kbd class="kbd-badge">M</kbd>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">마우스 올린 방송만 소리 켜기 ON / OFF</div>
+          </div>
+          <kbd class="kbd-badge">H</kbd>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">모든 생방송 지연 시간(싱크) 맞추기</div>
+          </div>
+          <kbd class="kbd-badge">S</kbd>
+        </div>
+        <div class="row">
+          <div class="row-text">
+            <div class="row-name">크게 보기 해제 / 열린 팝업 닫기</div>
+          </div>
+          <kbd class="kbd-badge">ESC</kbd>
+        </div>
+      </section>
+
+      <!-- 백업 / 초기화 -->
+      <section class="sec" id="secBackup">
+        <h2>백업 및 초기화</h2>
+        <p class="sec-desc">즐겨찾기, 그룹, 채팅 저장소 및 모든 설정을 JSON 파일로 백업하거나 복원할 수 있습니다.</p>
+        <div class="backup-btns">
+          <button id="exportBtn" class="btn btn-sub btn-sm" type="button">📥 설정 내보내기 (JSON)</button>
+          <button id="importBtn" class="btn btn-sub btn-sm" type="button">📤 설정 가져오기 (JSON)</button>
+          <button id="resetSettingsBtn" class="btn btn-sub btn-sm" type="button">🔄 설정 기본값 초기화</button>
+          <input id="importFileInput" type="file" accept=".json,application/json" class="hidden" />
+        </div>
+        <div id="backupNotice" class="add-error"></div>
+      </section>
+    </main>
+
+    <div id="bugModal" class="modal hidden">
+      <div class="modal-box">
+        <div class="modal-head">
+          <b>🐞 버그 제보</b>
+          <button class="btn btn-sub btn-sm modal-close" type="button">✕</button>
+        </div>
+        <p class="sec-desc">어떤 상황에서 문제가 발생했는지 적어주시면 진단 정보와 함께 복사됩니다.</p>
+        <textarea id="bugText" class="field" rows="5" placeholder="예: 방송 3개를 켜면 두 번째 칸이 검게 나와요"></textarea>
+        <div class="modal-btns">
+          <button id="bugCopyBtn" class="btn btn-main btn-sm" type="button">진단 정보와 함께 복사</button>
+        </div>
+        <p class="sec-desc" id="bugContact"></p>
+      </div>
+    </div>
+
+    <div id="donateModal" class="modal hidden">
+      <div class="modal-box">
+        <div class="modal-head">
+          <b>☕ 후원하기</b>
+          <button class="btn btn-sub btn-sm modal-close" type="button">✕</button>
+        </div>
+        <p class="sec-desc" id="donateText">개발자에게 커피 한 잔 후원하기</p>
+      </div>
+    </div>
+
+    <script src="../shared/common.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
